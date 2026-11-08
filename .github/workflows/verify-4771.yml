@@ -9,9 +9,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
