@@ -1,0 +1,33 @@
+name: EmDash PR 4771 platform verification
+on:
+  push:
+    branches: [codex/verify-4771-node24]
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          repository: emdash-cms/emdash
+          ref: f95d9f76ee823fe9cf44294192df6c2988084744
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: '24.15.0'
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
+      - name: Verify runtime and candidate
+        run: |
+          node -e "console.log(process.platform, process.version); if (process.version !== 'v24.15.0') process.exit(1)"
+          git rev-parse HEAD
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm --filter emdash exec vitest run tests/unit/build-ui-types.test.ts
+      - name: Verify declaration files
+        run: node -e "const fs = require('node:fs'); for (const name of ['ui', 'ui-comments', 'ui-search', 'ui-webmcp-search']) if (!fs.statSync('packages/core/dist/' + name + '.d.mts').size) process.exit(1)"
